@@ -22,7 +22,7 @@ constructor(@Inject(PLATFORM_ID) private _platformId: any){}
     if (isPlatformBrowser(this._platformId)) {
       window.addEventListener('message', (event) => {
         // Verifica el origen del mensaje
-        if (event.origin !== 'https://my-testing-forum-1.forumotion.com/') return;
+        if (event.origin !== 'https://my-testing-forum-1.forumotion.com/h3-aaaaaaaaaaaa') return;
 
         if (event.data && event.data.userlevel) {
           this.userLevel = event.data.userlevel;
