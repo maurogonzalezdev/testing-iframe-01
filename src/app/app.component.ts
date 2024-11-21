@@ -3,6 +3,12 @@ import { Component, OnInit, Inject, PLATFORM_ID, ViewChild, ElementRef } from '@
 import { isPlatformBrowser } from '@angular/common';
 import { environment } from '../environments/environment';
 
+declare global {
+  interface Window {
+    _userdata: any;
+  }
+}
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -22,17 +28,43 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     if (isPlatformBrowser(this._platformId)) {
-      window.addEventListener('message', (event) => {
-        // Verifica el origen del mensaje
-        if (event.origin !== 'https://tu-dominio-padre.com') return; // Reemplaza con el origen correcto
+      // Intento de acceso directo (solo si mismo origen)
+      try {
+        const parentWindow = window.parent as any;
+        if (parentWindow && parentWindow._userdata) {
+          this.userLevel = parentWindow._userdata.user_level;
+          this.username = parentWindow._userdata.username;
+          this.avatar = parentWindow._userdata.avatar;
+          console.log('User Level (Direct Access):', this.userLevel);
+          console.log('Username (Direct Access):', this.username);
+          console.log('Avatar (Direct Access):', this.avatar);
+        } else {
+          console.warn('_userdata no está definido en la ventana padre.');
+        }
+      } catch (error) {
+        console.error('Error accediendo a _userdata directamente:', error);
+      }
 
-        if (event.data && event.data.user_level) {
-          this.userLevel = event.data.user_level;
-          this.username = event.data.username;
-          this.avatar = event.data.avatar;
-          console.log('User Level:', this.userLevel);
-          console.log('Username:', this.username);
-          console.log('Avatar:', this.avatar);
+      // Escucha de mensajes vía postMessage
+      window.addEventListener('message', (event) => {
+        // Reemplaza con el origen correcto de la página padre
+        if (event.origin !== 'https://my-testing-forum-1.forumotion.com') return;
+
+        if (event.data) {
+          if (typeof event.data.user_level === 'number') {
+            this.userLevel = event.data.user_level;
+            console.log('User Level (postMessage):', this.userLevel);
+          }
+
+          if (typeof event.data.username === 'string') {
+            this.username = event.data.username;
+            console.log('Username (postMessage):', this.username);
+          }
+
+          if (typeof event.data.avatar === 'string') {
+            this.avatar = event.data.avatar;
+            console.log('Avatar (postMessage):', this.avatar);
+          }
         }
       });
     }
